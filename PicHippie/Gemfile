@@ -37,6 +37,12 @@ gem 'jbuilder', '~> 2.5'
 # gem 'capistrano-rails', group: :development
 # Use Figaro
 gem "figaro"
+# Post web api requests
+gem "httparty"
+# Paginate images
+gem 'will_paginate'
+# beautify pagination
+gem 'will_paginate-materialize'
 
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console

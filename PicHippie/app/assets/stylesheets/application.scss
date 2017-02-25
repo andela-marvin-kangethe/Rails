@@ -18,4 +18,13 @@
 
 .card-panel {
   cursor: pointer;
+  
+}
+.pagination a li.active {
+  color: #fff;
+  width: 30px;
+}
+
+.pagination a li{
+	margin: 0 15px;
 }
