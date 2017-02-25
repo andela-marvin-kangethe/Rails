@@ -1,2 +1,12 @@
-<h1>Homepage#index</h1>
-<p>Find me in app/views/homepage/index.html.erb</p>
+<!-- <h1>Homepage#index</h1>
+<p>Find me in app/views/homepage/index.html.erb</p> -->
+<div class="container">
+  <div class="card-panel hoverable">
+    <% @image.each do|photos|%>
+      <p>name is <%=photos.owner%></p>
+      <img src=<%= get_image(photos.url) %>
+      alt ="pexels.com" style="width:500px;height:500px;">
+      <%= link_to "show", preview_path(photos.id)%>
+    <% end %>
+  </div>
+</div>
