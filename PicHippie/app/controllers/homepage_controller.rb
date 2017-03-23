@@ -1,60 +1,75 @@
 class HomepageController < ApplicationController
-	#before_action :get_json_data
-	
-	require 'json'
-	require 'httparty'
+  require 'json'
+  require 'httparty'
 
-	@@base_url = 'http://api.pexels.com/v1/search?query=girl'
-	@@previous_url = ''
-	 
-	def index
-		#retrieve_data_from_api(@@base_url)
-		@image = Image.paginate(:page => params[:page], :per_page => 5).order('owner ASC')
-	end
+  $id_container = Array.new
 
-	def show
-		@image = Image.find_by(:id => params[:id])
-	end	
+  def index
+    # call_api
+    @gallery = ArtImage.paginate(page: params[:page], per_page: 10).order('art_title ASC')
+  end
 
-	private
+  private
 
-	def get_json_data
-	  begin
-	  	file = File.read("public/index.json")
-	  	data = JSON.parse(file)
+  def send_api_request
+    response = HTTParty.get(
+      "https://www.rijksmuseum.nl/api/en/collection?key=#{Figaro.env.RIJKS_STUDIO_API_KEY}&format=json&ps=50&p=7"
+    )
+    file = File.open("public/studio.json", "w")
+    file.write(response.to_json)
+  end
 
-		for pos in data['photos']
-		    response = HTTParty.get(pos['url']).code.to_i
-		   	logger.debug response
-		   	if response == 200
-			    Image.create(
-			  		:owner => pos['photographer'],
-			  		:url => pos['url'] )
-		    end
-		    File.delete("public/index.json")
-		end    		
-	  rescue Exception => e
-	  end	
-	end
-	  
-	def retrieve_data_from_api(base_url)
-	 	begin
-	 		if @@base_url != @@previous_url
+  def read_from_file
+    data = JSON.parse(File.read('public/studio.json'))
+    for images in data['artObjects']
+      save_art_in_database(images)
+      $id_container.push images["objectNumber"].downcase
+    end  
+  end
 
-		 		response = HTTParty.get(
-		 				base_url,
-	    				:headers => { 
-	    					"Authorization" => Figaro.env.PEXELS_API_KEY
-	    					})
-		 		file = File.open("public/index.json", "w")
-	  			file.write(response.to_json) 
-		 		get_json_data
-		 		@@previous_url = base_url
-		 	end	
-	 	rescue Exception => e
-	 		logger.debug "exit at here"
-	 	end
-	end
+  def save_art_in_database(images)
+    ArtImage.create(
+      art_title: images["title"],
+      image_url: images["webImage"]["url"],
+      art_description: images["longTitle"],
+      art_maker: images["principalOrFirstMaker"],
+      art_id_number: images["objectNumber"]
+    )
+  end
 
+  def send_api_request_for_description(art_id_number)
+    response = HTTParty.get(
+      "https://www.rijksmuseum.nl/api/en/collection/#{art_id_number}?key=#{Figaro.env.RIJKS_STUDIO_API_KEY}&format=json"
+    )
+    file = File.open('public/description.json', "w")
+    file.write(response.to_json)
+  end
 
+  def read_description_from_json
+    begin
+      data = JSON.parse(File.read('public/description.json'))
+      sleep 1
+      data["artObject"]["description"]
+    rescue Exception => e
+      "everything is awesome"
+    end  
+  end
+
+  def save_description
+    for art_id in 0..$id_container.count-1
+      send_api_request_for_description($id_container[art_id])
+      sleep 3
+      id_no = $id_container[art_id].upcase
+      ArtImage.where(art_id_number: id_no).update(art_description: read_description_from_json)
+    end  
+    $id_container.clear  
+  end
+
+  def call_api
+    send_api_request
+    read_from_file
+    # save_description
+  end
+
+  
 end

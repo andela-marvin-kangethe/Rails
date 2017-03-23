@@ -10,13 +10,24 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170225121945) do
+ActiveRecord::Schema.define(version: 20170322154655) do
+
+  create_table "art_images", force: :cascade do |t|
+    t.string   "art_title"
+    t.string   "image_url"
+    t.string   "art_description"
+    t.string   "art_maker"
+    t.string   "art_id_number"
+    t.datetime "created_at",      null: false
+    t.datetime "updated_at",      null: false
+  end
 
   create_table "images", force: :cascade do |t|
     t.string   "owner"
     t.string   "url"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string   "search_url"
   end
 
 end
